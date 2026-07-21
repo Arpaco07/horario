@@ -291,23 +291,46 @@ const PRESETS = [
   {label:"1:00 a cierre", s:780, e:CLOSE},
   {label:"3:00 a cierre", s:900, e:CLOSE},
 ];
-const KEY = "horarioLosPares_v1";
+const KEY = "horarioLosPares_v2";
 
 /* ================= Estado ================= */
 let state = null, editMode = false, editing = null;
 
 function seed(){
-  const mk = names => names.map(n=>({name:n, shifts:Array(7).fill(null)}));
+  const S={D:null,"1c":{s:780,e:1380},"3c":{s:900,e:1380},"730":{s:450,e:930},
+    "8a4":{s:480,e:960},"1a9":{s:780,e:1260},"2a10":{s:840,e:1320},
+    "11a7":{s:660,e:1140},"9a9":{s:540,e:1260},"330":{s:930,e:1410},
+    "7a11":{s:420,e:1380},"7a3":{s:420,e:900}};
+  const P=(name,codes)=>({name,shifts:codes.map(c=>{const v=S[c];return v?{s:v.s,e:v.e}:null;})});
   return {
     restName:"Los Pares 84×88",
-    weekStart: mondayISO(new Date()),
+    weekStart:"2026-07-20",
     cfg:{thHour:13, minMes:2, minCoc:2},
     footer:"SÁBADOS Y DOMINGOS ABRIMOS A LAS 09:00 AM\nAL PERSONAL QUE FALTE SIN PREVIO AVISO NO SE LE DARÁ PROPINA DURANTE UNA SEMANA.",
     sections:{
-      cocina:   mk(["Ausencio","Jessica","Juliana","Citlali","Yara"]),
-      meseros:  mk(["Héctor","Uriel","Jair","Chava","Jorge","Goyo"]),
-      barra:    mk(["Kevin","Romario"]),
-      limpieza: mk(["Francisca","Kristal"]),
+      cocina:[
+        P("Ausencio",["1c","1c","D","1c","1c","1c","3c"]),
+        P("Jessica", ["D","3c","1c","3c","3c","8a4","8a4"]),
+        P("Juliana", ["3c","730","730","D","730","8a4","8a4"]),
+        P("Citlali", ["3c","3c","3c","3c","D","3c","2a10"]),
+        P("Yara",    ["730","D","1a9","730","1a9","1a9","1a9"]),
+      ],
+      meseros:[
+        P("Héctor",["730","730","3c","730","D","8a4","8a4"]),
+        P("Uriel", ["3c","3c","D","3c","3c","3c","3c"]),
+        P("Jair",  ["11a7","D","730","11a7","730","1a9","11a7"]),
+        P("Chava", ["3c","3c","3c","D","3c","3c","3c"]),
+        P("Jorge", ["D","3c","3c","3c","3c","11a7","1a9"]),
+        P("Goyo",  ["D","11a7","11a7","3c","11a7","11a7","1a9"]),
+      ],
+      barra:[
+        P("Kevin",  ["9a9","D","3c","3c","330","330","330"]),
+        P("Romario",["D","9a9","730","730","730","8a4","8a4"]),
+      ],
+      limpieza:[
+        P("Francisca",["D","3c","3c","3c","3c","3c","3c"]),
+        P("Kristal",  ["7a11","7a3","7a3","7a3","7a3","D","7a3"]),
+      ],
     }
   };
 }
