@@ -131,6 +131,15 @@
   .cell .txt{display:block}
   tbody tr:nth-child(even) .emp-name{background:#fbfaf7}
 
+  /* Deslizar horizontal con la columna de nombres fija */
+  .table-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
+  .col-name{position:sticky;left:0;z-index:1}
+  .emp-name{position:sticky;left:0;z-index:1;background:#fff}
+  tbody tr:nth-child(even) .emp-name{background:#fbfaf7}
+  .col-name,.emp-name{box-shadow:1px 0 0 var(--line-strong)}
+  thead th.col-name{left:0;z-index:3}
+  .sec-row td{position:sticky;left:0;z-index:2}
+
   .addrow td{padding:8px 12px;text-align:left;background:#faf9f5}
   .add-emp{display:inline-flex;gap:6px}
   .add-emp input{font:inherit;font-size:13px;padding:6px 8px;border:1px solid var(--line-strong);border-radius:8px;width:160px}
@@ -161,7 +170,11 @@
 
   @media(max-width:720px){
     .cov-grid{grid-template-columns:repeat(2,1fr)}
-    .col-name{width:110px}
+    .col-name{width:96px}
+    .emp-name{padding:8px;font-size:12px}
+    .cell{min-width:62px;padding:7px 4px;font-size:12px}
+    thead th{padding:7px 3px;font-size:12px}
+    thead .daynum{font-size:10px}
     .settings{gap:12px}
   }
 
@@ -175,6 +188,8 @@
     .sheet-title{display:block;text-align:center;margin-bottom:8px}
     .sheet-title .rest{font-family:"Archivo";font-weight:800;font-size:20px}
     .sheet-title .range{font-weight:700;font-size:14px;letter-spacing:.04em}
+    .table-scroll{overflow:visible}
+    .col-name,.emp-name,.sec-row td{position:static !important;box-shadow:none !important}
     thead th{position:static;background:#eee !important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
     .sec-row td{background:#333 !important;color:#fff !important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
     .cell.off{background:#f0f0f0 !important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
@@ -226,10 +241,12 @@
       <div class="rest" id="printName">Los Pares 84×88</div>
       <div class="range" id="printRange"></div>
     </div>
-    <table>
-      <thead><tr id="headRow"></tr></thead>
-      <tbody id="body"></tbody>
-    </table>
+    <div class="table-scroll">
+      <table>
+        <thead><tr id="headRow"></tr></thead>
+        <tbody id="body"></tbody>
+      </table>
+    </div>
   </div>
 
   <div class="legend no-print">
