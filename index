@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Horario · Los Pares 84×88</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#1b1a17;
+    --ink-soft:#5a564d;
+    --paper:#f5f3ee;
+    --card:#ffffff;
+    --line:#d9d4c7;
+    --line-strong:#b7b0a0;
+    --brand:#1f6f5c;      /* verde cocina */
+    --brand-ink:#0f4436;
+    --ok:#1f7a4d;
+    --ok-bg:#e4f2e7;
+    --warn:#9a6a00;
+    --warn-bg:#fbf0d4;
+    --crit:#b3261e;
+    --crit-bg:#fbe3e1;
+    --off:#eceae4;
+    --off-ink:#8b8578;
+    --shadow:0 1px 2px rgba(0,0,0,.06),0 6px 20px rgba(20,18,12,.08);
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0}
+  body{
+    background:var(--paper);
+    color:var(--ink);
+    font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+    line-height:1.4;
+    -webkit-text-size-adjust:100%;
+  }
+  h1,h2,h3,.display{font-family:"Archivo",system-ui,sans-serif}
+  .wrap{max-width:1180px;margin:0 auto;padding:18px 16px 80px}
+
+  /* ---------- Encabezado ---------- */
+  .top{display:flex;flex-wrap:wrap;gap:14px;align-items:flex-end;justify-content:space-between;margin-bottom:14px}
+  .brand-block h1{
+    font-size:26px;font-weight:800;letter-spacing:-.01em;margin:0;
+    line-height:1.05;
+  }
+  .brand-block .sub{color:var(--ink-soft);font-size:13px;margin-top:2px}
+  .titlefield{
+    font:inherit;font-family:"Archivo";font-size:26px;font-weight:800;
+    border:none;background:transparent;color:var(--ink);width:100%;
+    padding:0;border-bottom:2px dashed transparent;
+  }
+  .titlefield:focus{outline:none;border-bottom-color:var(--brand)}
+
+  .toolbar{display:flex;flex-wrap:wrap;gap:8px}
+  button,.btn{
+    font:inherit;font-weight:600;font-size:13px;cursor:pointer;
+    border:1px solid var(--line-strong);background:var(--card);color:var(--ink);
+    padding:9px 13px;border-radius:10px;transition:.12s;
+  }
+  button:hover,.btn:hover{border-color:var(--ink);transform:translateY(-1px)}
+  button:active{transform:translateY(0)}
+  button.primary{background:var(--brand);border-color:var(--brand);color:#fff}
+  button.primary:hover{background:var(--brand-ink);border-color:var(--brand-ink)}
+  button.ghost{background:transparent}
+  button.danger{color:var(--crit);border-color:#e6b6b2}
+  button.danger:hover{background:var(--crit-bg);border-color:var(--crit)}
+  button.on{background:var(--brand);border-color:var(--brand);color:#fff}
+
+  /* ---------- Barra de ajustes ---------- */
+  .settings{
+    background:var(--card);border:1px solid var(--line);border-radius:14px;
+    padding:12px 14px;margin-bottom:16px;box-shadow:var(--shadow);
+    display:flex;flex-wrap:wrap;gap:16px 22px;align-items:center;
+  }
+  .settings label{font-size:12px;color:var(--ink-soft);font-weight:600;display:flex;flex-direction:column;gap:4px}
+  .settings input[type=date],.settings input[type=number]{
+    font:inherit;font-size:14px;padding:7px 9px;border:1px solid var(--line-strong);
+    border-radius:8px;background:#fff;color:var(--ink)
+  }
+  .settings input[type=number]{width:64px}
+  .rule-inline{display:flex;align-items:center;gap:7px;font-size:13px;color:var(--ink);font-weight:600;flex-wrap:wrap}
+  .rule-inline input{width:56px}
+
+  /* ---------- Panel de cobertura (firma) ---------- */
+  .coverage{margin-bottom:18px}
+  .coverage h2{font-size:14px;text-transform:uppercase;letter-spacing:.08em;color:var(--ink-soft);margin:0 0 8px;font-weight:700}
+  .cov-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:8px}
+  .cov-day{
+    border-radius:12px;padding:10px;border:1px solid var(--line);background:var(--card);
+    display:flex;flex-direction:column;gap:6px;min-height:74px;
+  }
+  .cov-day .d-head{display:flex;align-items:center;justify-content:space-between;gap:6px}
+  .cov-day .d-name{font-family:"Archivo";font-weight:700;font-size:12px;letter-spacing:.03em}
+  .cov-day .d-num{font-size:11px;color:var(--ink-soft)}
+  .pill{font-size:10.5px;font-weight:800;padding:2px 7px;border-radius:999px;white-space:nowrap;letter-spacing:.02em}
+  .pill.ok{background:var(--ok-bg);color:var(--ok)}
+  .pill.warn{background:var(--warn-bg);color:var(--warn)}
+  .pill.crit{background:var(--crit-bg);color:var(--crit)}
+  .cov-msg{font-size:11px;line-height:1.35;color:var(--ink)}
+  .cov-msg.warn::before{content:"⚠ ";color:var(--warn)}
+  .cov-msg.crit::before{content:"● ";color:var(--crit)}
+  .cov-day.is-ok{border-color:#bfe0c9}
+  .cov-day.is-warn{border-color:#eccf87}
+  .cov-day.is-crit{border-color:#e6b6b2}
+
+  /* ---------- Rejilla del horario ---------- */
+  .sheet{background:var(--card);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);overflow:hidden}
+  .sheet-title{display:none}
+  table{border-collapse:collapse;width:100%;font-size:13px}
+  th,td{border:1px solid var(--line);padding:0;text-align:center}
+  thead th{background:#efece4;font-family:"Archivo";font-weight:700;padding:8px 4px;position:sticky;top:0;z-index:2}
+  thead .daynum{display:block;font-size:11px;color:var(--ink-soft);font-weight:600}
+  .col-name{width:130px;text-align:left}
+  thead .col-name{text-align:left;padding-left:12px}
+  .sec-row td{
+    background:var(--brand);color:#fff;font-family:"Archivo";font-weight:700;
+    text-align:left;padding:6px 12px;letter-spacing:.06em;font-size:12px;text-transform:uppercase;
+  }
+  .sec-row .sec-count{font-weight:600;opacity:.85;font-size:11px;text-transform:none;letter-spacing:0}
+  .emp-name{text-align:left;padding:7px 12px;font-weight:600;font-size:13px}
+  .emp-name .nameinput{font:inherit;font-weight:600;border:1px solid var(--line-strong);border-radius:7px;padding:5px 7px;width:100%;max-width:150px}
+  .del-emp{border:none;background:transparent;color:var(--crit);font-weight:800;padding:2px 6px;margin-left:2px;border-radius:6px}
+  .del-emp:hover{background:var(--crit-bg);transform:none}
+  .cell{padding:6px 4px;cursor:pointer;font-weight:600;min-width:80px;transition:background .1s}
+  .cell:hover{background:#f0efe9}
+  .cell.off{color:var(--off-ink);background:repeating-linear-gradient(45deg,#f3f2ec,#f3f2ec 6px,#eceae2 6px,#eceae2 12px)}
+  .cell.off .txt{font-weight:800;color:var(--off-ink)}
+  .cell .txt{display:block}
+  tbody tr:nth-child(even) .emp-name{background:#fbfaf7}
+
+  .addrow td{padding:8px 12px;text-align:left;background:#faf9f5}
+  .add-emp{display:inline-flex;gap:6px}
+  .add-emp input{font:inherit;font-size:13px;padding:6px 8px;border:1px solid var(--line-strong);border-radius:8px;width:160px}
+  .add-emp button{padding:6px 12px}
+
+  .footnote{margin-top:14px;padding:0 2px}
+  .footnote-area{width:100%;font:inherit;font-size:12.5px;color:var(--ink);border:1px dashed var(--line-strong);border-radius:10px;padding:10px 12px;background:#fbfaf7;resize:vertical;min-height:58px;text-align:center;font-weight:600;letter-spacing:.01em}
+
+  .legend{display:flex;gap:14px;flex-wrap:wrap;margin:10px 2px 0;font-size:12px;color:var(--ink-soft)}
+  .legend span{display:inline-flex;align-items:center;gap:5px}
+  .swatch{width:12px;height:12px;border-radius:3px;display:inline-block}
+
+  /* ---------- Modal de turno ---------- */
+  .overlay{position:fixed;inset:0;background:rgba(20,18,12,.42);display:none;align-items:center;justify-content:center;padding:16px;z-index:50}
+  .overlay.show{display:flex}
+  .modal{background:#fff;border-radius:16px;max-width:420px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,.3);overflow:hidden}
+  .modal-head{padding:14px 18px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center}
+  .modal-head .who{font-family:"Archivo";font-weight:800;font-size:16px}
+  .modal-head .when{font-size:12px;color:var(--ink-soft)}
+  .modal-body{padding:16px 18px}
+  .preset-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px}
+  .preset{padding:10px;font-size:13px;text-align:center}
+  .custom-row{display:flex;align-items:center;gap:8px;margin:6px 0 4px;flex-wrap:wrap}
+  .custom-row select{font:inherit;font-size:14px;padding:8px;border:1px solid var(--line-strong);border-radius:9px;background:#fff}
+  .modal-foot{display:flex;gap:8px;justify-content:space-between;padding:14px 18px;border-top:1px solid var(--line);background:#faf9f5}
+
+  .hint{font-size:12.5px;color:var(--ink-soft);margin:2px 2px 14px}
+
+  @media(max-width:720px){
+    .cov-grid{grid-template-columns:repeat(2,1fr)}
+    .col-name{width:110px}
+    .settings{gap:12px}
+  }
+
+  /* ---------- IMPRESIÓN ---------- */
+  @media print{
+    @page{size:landscape;margin:10mm}
+    body{background:#fff}
+    .wrap{max-width:none;padding:0}
+    .no-print{display:none !important}
+    .sheet{box-shadow:none;border:none;border-radius:0}
+    .sheet-title{display:block;text-align:center;margin-bottom:8px}
+    .sheet-title .rest{font-family:"Archivo";font-weight:800;font-size:20px}
+    .sheet-title .range{font-weight:700;font-size:14px;letter-spacing:.04em}
+    thead th{position:static;background:#eee !important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+    .sec-row td{background:#333 !important;color:#fff !important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+    .cell.off{background:#f0f0f0 !important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+    table{font-size:12px}
+    .del-emp,.nameinput{display:none}
+    .emp-name .staticname{display:inline !important}
+    .footnote-area{border:none;background:#fff;resize:none;font-weight:700}
+  }
+  .emp-name .staticname{display:none}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="top no-print">
+    <div class="brand-block" style="flex:1;min-width:240px">
+      <input class="titlefield" id="restName" value="Los Pares 84×88" aria-label="Nombre del restaurante">
+      <div class="sub">Horario semanal del personal · se guarda solo en este navegador</div>
+    </div>
+    <div class="toolbar">
+      <button id="editBtn" class="ghost" onclick="toggleEdit()">✎ Editar empleados</button>
+      <button class="ghost" onclick="exportData()">↓ Respaldo</button>
+      <button class="ghost" onclick="document.getElementById('importFile').click()">↑ Cargar</button>
+      <input type="file" id="importFile" accept="application/json" style="display:none" onchange="importData(event)">
+      <button class="primary" onclick="window.print()">🖨 Imprimir</button>
+    </div>
+  </div>
+
+  <div class="settings no-print">
+    <label>Semana (elige el lunes)
+      <input type="date" id="weekStart" onchange="setWeek(this.value)">
+    </label>
+    <div class="rule-inline">
+      A partir de
+      <input type="number" id="thHour" min="0" max="23" value="13" onchange="setCfg()"> h
+      mínimo
+      <input type="number" id="minMes" min="0" max="9" value="2" onchange="setCfg()"> meseros
+      y
+      <input type="number" id="minCoc" min="0" max="9" value="2" onchange="setCfg()"> en cocina
+    </div>
+  </div>
+
+  <section class="coverage no-print">
+    <h2>Revisión de cobertura</h2>
+    <div class="cov-grid" id="covGrid"></div>
+  </section>
+
+  <div class="sheet">
+    <div class="sheet-title">
+      <div class="rest" id="printName">Los Pares 84×88</div>
+      <div class="range" id="printRange"></div>
+    </div>
+    <table>
+      <thead><tr id="headRow"></tr></thead>
+      <tbody id="body"></tbody>
+    </table>
+  </div>
+
+  <div class="legend no-print">
+    <span><i class="swatch" style="background:var(--brand)"></i> Sección</span>
+    <span><i class="swatch off" style="background:#eceae2"></i> D = Descanso</span>
+    <span><i class="swatch" style="background:var(--ok-bg)"></i> Cobertura OK</span>
+    <span><i class="swatch" style="background:var(--warn-bg)"></i> Falta gente</span>
+    <span><i class="swatch" style="background:var(--crit-bg)"></i> Sin cubrir</span>
+  </div>
+
+  <div class="footnote">
+    <textarea class="footnote-area" id="footer" onchange="save()"></textarea>
+  </div>
+
+  <p class="hint no-print">Toca cualquier celda para poner el turno. Los avisos de arriba se actualizan solos: si dejas menos gente de la que pusiste como mínimo por la tarde, se pone en amarillo o rojo.</p>
+</div>
+
+<!-- Modal turno -->
+<div class="overlay" id="overlay" onclick="if(event.target===this)closeModal()">
+  <div class="modal">
+    <div class="modal-head">
+      <div><div class="who" id="mWho"></div><div class="when" id="mWhen"></div></div>
+      <button class="ghost" onclick="closeModal()" style="border:none;font-size:18px;padding:2px 8px">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="preset-grid" id="presetGrid"></div>
+      <div style="font-size:12px;color:var(--ink-soft);font-weight:600;margin-bottom:4px">Turno personalizado</div>
+      <div class="custom-row">
+        <select id="startSel"></select>
+        <span style="color:var(--ink-soft)">a</span>
+        <select id="endSel"></select>
+        <button class="primary" onclick="applyCustom()">Aplicar</button>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="danger" onclick="applyShift(null)">Descanso (D)</button>
+      <button class="ghost" onclick="closeModal()">Cancelar</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ================= Configuración base ================= */
+const DAYS = ["LUNES","MARTES","MIÉRCOLES","JUEVES","VIERNES","SÁBADO","DOMINGO"];
+const MONTHS = ["enero","febrero","marzo","abril","mayo","junio","julio","agosto","septiembre","octubre","noviembre","diciembre"];
+const CLOSE = 23*60;                    // 11:00 pm
+const openFor = d => (d<=4 ? 8*60 : 9*60); // Lun-Vie 8am, Sáb-Dom 9am
+const SECTIONS_DEF = [
+  {id:"cocina",   name:"Cocina",   check:true},
+  {id:"meseros",  name:"Meseros",  check:true},
+  {id:"barra",    name:"Barra",    check:false},
+  {id:"limpieza", name:"Limpieza", check:false},
+];
+const PRESETS = [
+  {label:"7:30 a 3:30", s:450, e:930},
+  {label:"8:00 a 4:00", s:480, e:960},
+  {label:"11:00 a 7:00", s:660, e:1140},
+  {label:"9:00 a 9:00", s:540, e:1260},
+  {label:"1:00 a cierre", s:780, e:CLOSE},
+  {label:"3:00 a cierre", s:900, e:CLOSE},
+];
+const KEY = "horarioLosPares_v1";
+
+/* ================= Estado ================= */
+let state = null, editMode = false, editing = null;
+
+function seed(){
+  const mk = names => names.map(n=>({name:n, shifts:Array(7).fill(null)}));
+  return {
+    restName:"Los Pares 84×88",
+    weekStart: mondayISO(new Date()),
+    cfg:{thHour:13, minMes:2, minCoc:2},
+    footer:"SÁBADOS Y DOMINGOS ABRIMOS A LAS 09:00 AM\nAL PERSONAL QUE FALTE SIN PREVIO AVISO NO SE LE DARÁ PROPINA DURANTE UNA SEMANA.",
+    sections:{
+      cocina:   mk(["Ausencio","Jessica","Juliana","Citlali","Yara"]),
+      meseros:  mk(["Héctor","Uriel","Jair","Chava","Jorge","Goyo"]),
+      barra:    mk(["Kevin","Romario"]),
+      limpieza: mk(["Francisca","Kristal"]),
+    }
+  };
+}
+
+/* ================= Utilidades de tiempo ================= */
+function mondayISO(dt){
+  const d = new Date(dt); const day=(d.getDay()+6)%7; d.setDate(d.getDate()-day);
+  return d.toISOString().slice(0,10);
+}
+function fmtShort(min){
+  let h=Math.floor(min/60), m=min%60, h12=((h+11)%12)+1;
+  return m===0 ? `${h12}` : `${h12}:${String(m).padStart(2,"0")}`;
+}
+function fmtLong(min){
+  let h=Math.floor(min/60), m=min%60, h12=((h+11)%12)+1, ap=h<12?"am":"pm";
+  return `${h12}:${String(m).padStart(2,"0")} ${ap}`;
+}
+function shiftLabel(sh){
+  if(!sh) return "D";
+  return `${fmtShort(sh.s)} a ${sh.e===CLOSE ? "cierre" : fmtShort(sh.e)}`;
+}
+function dayDates(){
+  const [y,m,d]=state.weekStart.split("-").map(Number);
+  const base=new Date(y,m-1,d);
+  return [...Array(7)].map((_,i)=>{const x=new Date(base);x.setDate(x.getDate()+i);return x;});
+}
+function rangeLabel(){
+  const ds=dayDates(), a=ds[0], b=ds[6];
+  if(a.getMonth()===b.getMonth())
+    return `DEL ${a.getDate()} AL ${b.getDate()} DE ${MONTHS[a.getMonth()].toUpperCase()}`;
+  return `DEL ${a.getDate()} DE ${MONTHS[a.getMonth()].toUpperCase()} AL ${b.getDate()} DE ${MONTHS[b.getMonth()].toUpperCase()}`;
+}
+
+/* ================= Persistencia ================= */
+function save(){
+  state.restName = document.getElementById("restName").value;
+  state.footer   = document.getElementById("footer").value;
+  try{ localStorage.setItem(KEY, JSON.stringify(state)); }catch(e){ /* preview sin storage */ }
+  renderCoverage(); renderPrintHeader();
+}
+function load(){
+  try{ const raw=localStorage.getItem(KEY); if(raw) return JSON.parse(raw); }catch(e){}
+  return seed();
+}
+
+/* ================= Cobertura (el corazón del sistema) ================= */
+function presentCount(secId,d,t){
+  let n=0; for(const e of state.sections[secId]){const s=e.shifts[d]; if(s && s.s<=t && t<s.e) n++;} return n;
+}
+function analyzeDay(d){
+  const th=state.cfg.thHour*60, msgs=[]; let sev="ok";
+  const bump=s=>{ if(s==="crit"||(s==="warn"&&sev==="ok")) sev=s; };
+
+  // Tarde: mínimos de meseros y cocina
+  const scan=(secId,minReq,nice)=>{
+    let worst=Infinity, firstBad=null;
+    for(let t=th;t<CLOSE;t+=30){ const c=presentCount(secId,d,t);
+      if(c<worst){worst=c;} if(c<minReq && firstBad===null) firstBad=t; }
+    if(worst<minReq){
+      const s = worst===0 ? "crit":"warn"; bump(s);
+      msgs.push({sev:s, txt: worst===0
+        ? `Sin ${nice} por la tarde (desde ${fmtLong(firstBad)})`
+        : `${nice}: solo ${worst} por la tarde, mín. ${minReq} (desde ${fmtLong(firstBad)})`});
+    }
+  };
+  scan("meseros", state.cfg.minMes, "meseros");
+  scan("cocina",  state.cfg.minCoc, "cocina");
+
+  // Mañana: que alguien abra (≥1)
+  const op=openFor(d);
+  const morn=(secId,nice)=>{
+    let any=false; for(let t=op;t<th;t+=30){ if(presentCount(secId,d,t)>=1){any=true;break;} }
+    if(!any){ bump("warn"); msgs.push({sev:"warn", txt:`Nadie abre ${nice} en la mañana`}); }
+  };
+  morn("meseros","meseros"); morn("cocina","cocina");
+
+  return {sev,msgs};
+}
+
+/* ================= Render ================= */
+function render(){
+  document.getElementById("restName").value = state.restName;
+  document.getElementById("footer").value   = state.footer;
+  document.getElementById("weekStart").value= state.weekStart;
+  document.getElementById("thHour").value   = state.cfg.thHour;
+  document.getElementById("minMes").value   = state.cfg.minMes;
+  document.getElementById("minCoc").value   = state.cfg.minCoc;
+  document.getElementById("editBtn").classList.toggle("on", editMode);
+  document.getElementById("editBtn").textContent = editMode ? "✓ Listo" : "✎ Editar empleados";
+  renderHead(); renderBody(); renderCoverage(); renderPrintHeader();
+}
+function renderPrintHeader(){
+  document.getElementById("printName").textContent = state.restName;
+  document.getElementById("printRange").textContent = rangeLabel();
+}
+function renderHead(){
+  const ds=dayDates(), row=document.getElementById("headRow");
+  row.innerHTML = `<th class="col-name">EMPLEADO</th>` +
+    ds.map((x,i)=>`<th>${DAYS[i]}<span class="daynum">${x.getDate()}</span></th>`).join("");
+}
+function renderBody(){
+  const b=document.getElementById("body"); b.innerHTML="";
+  for(const sec of SECTIONS_DEF){
+    const emps=state.sections[sec.id];
+    const secTr=document.createElement("tr"); secTr.className="sec-row";
+    secTr.innerHTML=`<td colspan="8">${sec.name} <span class="sec-count">· ${emps.length}</span></td>`;
+    b.appendChild(secTr);
+
+    emps.forEach((emp,ei)=>{
+      const tr=document.createElement("tr");
+      const nameCell = editMode
+        ? `<input class="nameinput" value="${esc(emp.name)}" onchange="renameEmp('${sec.id}',${ei},this.value)"><button class="del-emp" title="Eliminar" onclick="delEmp('${sec.id}',${ei})">✕</button>`
+        : `<span class="staticname">${esc(emp.name)}</span><span class="scr">${esc(emp.name)}</span>`;
+      let cells=`<td class="emp-name">${nameCell}</td>`;
+      for(let d=0; d<7; d++){
+        const sh=emp.shifts[d]; const off = !sh;
+        cells+=`<td class="cell${off?" off":""}" onclick="openModal('${sec.id}',${ei},${d})"><span class="txt">${shiftLabel(sh)}</span></td>`;
+      }
+      tr.innerHTML=cells; b.appendChild(tr);
+    });
+
+    if(editMode){
+      const addTr=document.createElement("tr"); addTr.className="addrow";
+      addTr.innerHTML=`<td colspan="8"><span class="add-emp">
+        <input placeholder="Nombre nuevo en ${sec.name}" onkeydown="if(event.key==='Enter'){addEmp('${sec.id}',this.value);this.value=''}">
+        <button class="primary" onclick="const i=this.previousElementSibling;addEmp('${sec.id}',i.value);i.value=''">+ Agregar</button>
+      </span></td>`;
+      b.appendChild(addTr);
+    }
+  }
+  // fix screen-reader duplicate
+  document.querySelectorAll(".scr").forEach(s=>s.style.display="none");
+}
+function renderCoverage(){
+  const ds=dayDates(), g=document.getElementById("covGrid"); g.innerHTML="";
+  for(let d=0; d<7; d++){
+    const a=analyzeDay(d);
+    const div=document.createElement("div");
+    div.className=`cov-day is-${a.sev}`;
+    const pillTxt = a.sev==="ok"?"OK":a.sev==="warn"?"REVISA":"FALTA";
+    let html=`<div class="d-head"><span class="d-name">${DAYS[d]} <span class="d-num">${ds[d].getDate()}</span></span>
+      <span class="pill ${a.sev}">${pillTxt}</span></div>`;
+    if(a.msgs.length) html+=a.msgs.map(m=>`<div class="cov-msg ${m.sev}">${m.txt}</div>`).join("");
+    else html+=`<div class="cov-msg" style="color:var(--ok)">Todo cubierto</div>`;
+    div.innerHTML=html; g.appendChild(div);
+  }
+}
+function esc(s){return String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));}
+
+/* ================= Acciones ================= */
+function toggleEdit(){ editMode=!editMode; render(); }
+function renameEmp(sec,i,v){ state.sections[sec][i].name=v.trim()||state.sections[sec][i].name; save(); }
+function delEmp(sec,i){ if(confirm(`¿Quitar a ${state.sections[sec][i].name}?`)){ state.sections[sec].splice(i,1); save(); render(); } }
+function addEmp(sec,name){ name=(name||"").trim(); if(!name) return; state.sections[sec].push({name, shifts:Array(7).fill(null)}); save(); render(); }
+function setWeek(v){ if(v){ state.weekStart=v; save(); render(); } }
+function setCfg(){
+  state.cfg.thHour=clamp(+document.getElementById("thHour").value,0,23);
+  state.cfg.minMes=clamp(+document.getElementById("minMes").value,0,9);
+  state.cfg.minCoc=clamp(+document.getElementById("minCoc").value,0,9);
+  save();
+}
+function clamp(n,a,b){n=isNaN(n)?a:n;return Math.max(a,Math.min(b,n));}
+
+/* ================= Modal de turno ================= */
+function openModal(sec,i,d){
+  editing={sec,i,d};
+  const emp=state.sections[sec][i];
+  document.getElementById("mWho").textContent=emp.name;
+  document.getElementById("mWhen").textContent=`${DAYS[d]} ${dayDates()[d].getDate()}`;
+  const pg=document.getElementById("presetGrid");
+  pg.innerHTML=PRESETS.map(p=>`<button class="preset" onclick="applyShift({s:${p.s},e:${p.e}})">${p.label}</button>`).join("");
+  buildTimeSelect("startSel", emp.shifts[d]?emp.shifts[d].s:openFor(d));
+  buildTimeSelect("endSel",   emp.shifts[d]?emp.shifts[d].e:CLOSE);
+  document.getElementById("overlay").classList.add("show");
+}
+function buildTimeSelect(id,sel){
+  const s=document.getElementById(id); s.innerHTML="";
+  for(let t=7*60;t<=23*60+30;t+=15){
+    const o=document.createElement("option"); o.value=t;
+    o.textContent=fmtLong(t)+(t===CLOSE?" (cierre)":"");
+    if(t===sel)o.selected=true; s.appendChild(o);
+  }
+}
+function applyShift(sh){
+  const {sec,i,d}=editing; state.sections[sec][i].shifts[d]=sh; save(); renderBody(); closeModal();
+}
+function applyCustom(){
+  const s=+document.getElementById("startSel").value, e=+document.getElementById("endSel").value;
+  if(e<=s){ alert("La hora de salida debe ser después de la de entrada."); return; }
+  applyShift({s,e});
+}
+function closeModal(){ document.getElementById("overlay").classList.remove("show"); editing=null; }
+
+/* ================= Respaldo ================= */
+function exportData(){
+  save();
+  const blob=new Blob([JSON.stringify(state,null,2)],{type:"application/json"});
+  const a=document.createElement("a"); a.href=URL.createObjectURL(blob);
+  a.download=`horario_${state.weekStart}.json`; a.click(); URL.revokeObjectURL(a.href);
+}
+function importData(ev){
+  const f=ev.target.files[0]; if(!f) return;
+  const r=new FileReader();
+  r.onload=()=>{ try{ state=JSON.parse(r.result); save(); render(); alert("Respaldo cargado."); }
+                 catch(e){ alert("Ese archivo no es un respaldo válido."); } };
+  r.readAsText(f); ev.target.value="";
+}
+
+/* ================= Inicio ================= */
+state=load();
+render();
+document.getElementById("restName").addEventListener("change",save);
+document.addEventListener("keydown",e=>{ if(e.key==="Escape") closeModal(); });
+</script>
+</body>
+</html>
