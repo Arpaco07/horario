@@ -82,6 +82,7 @@
   .settings input[type=number]{width:64px}
   .rule-inline{display:flex;align-items:center;gap:7px;font-size:13px;color:var(--ink);font-weight:600;flex-wrap:wrap}
   .rule-inline input{width:56px}
+  .rule-inline select{font:inherit;font-size:14px;font-weight:600;padding:7px 9px;border:1px solid var(--line-strong);border-radius:8px;background:#fff;color:var(--ink)}
 
   /* ---------- Panel de cobertura (firma) ---------- */
   .coverage{margin-bottom:18px}
@@ -179,10 +180,8 @@
     .cell.off{background:#f0f0f0 !important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
     table{font-size:12px}
     .del-emp,.nameinput{display:none}
-    .emp-name .staticname{display:inline !important}
     .footnote-area{border:none;background:#fff;resize:none;font-weight:700}
   }
-  .emp-name .staticname{display:none}
 </style>
 </head>
 <body>
@@ -207,14 +206,15 @@
       <input type="date" id="weekStart" onchange="setWeek(this.value)">
     </label>
     <div class="rule-inline">
-      A partir de
-      <input type="number" id="thHour" min="0" max="23" value="13" onchange="setCfg()"> h
-      mínimo
+      Después de las
+      <select id="thHour" onchange="setCfg()"></select>
+      deben estar mínimo
       <input type="number" id="minMes" min="0" max="9" value="2" onchange="setCfg()"> meseros
       y
       <input type="number" id="minCoc" min="0" max="9" value="2" onchange="setCfg()"> en cocina
     </div>
   </div>
+  <p class="hint no-print" style="margin-top:-8px">Esa hora es cuando empieza el turno fuerte: a partir de ahí el sistema exige 2 meseros y 2 de cocina. Antes de esa hora, con 1 mesero basta.</p>
 
   <section class="coverage no-print">
     <h2>Revisión de cobertura</h2>
@@ -392,7 +392,9 @@ function render(){
   document.getElementById("restName").value = state.restName;
   document.getElementById("footer").value   = state.footer;
   document.getElementById("weekStart").value= state.weekStart;
-  document.getElementById("thHour").value   = state.cfg.thHour;
+  const thSel=document.getElementById("thHour");
+  thSel.innerHTML=[...Array(15)].map((_,i)=>{const h=8+i;return `<option value="${h}">${fmtLong(h*60)}</option>`;}).join("");
+  thSel.value=state.cfg.thHour;
   document.getElementById("minMes").value   = state.cfg.minMes;
   document.getElementById("minCoc").value   = state.cfg.minCoc;
   document.getElementById("editBtn").classList.toggle("on", editMode);
@@ -420,7 +422,7 @@ function renderBody(){
       const tr=document.createElement("tr");
       const nameCell = editMode
         ? `<input class="nameinput" value="${esc(emp.name)}" onchange="renameEmp('${sec.id}',${ei},this.value)"><button class="del-emp" title="Eliminar" onclick="delEmp('${sec.id}',${ei})">✕</button>`
-        : `<span class="staticname">${esc(emp.name)}</span><span class="scr">${esc(emp.name)}</span>`;
+        : `${esc(emp.name)}`;
       let cells=`<td class="emp-name">${nameCell}</td>`;
       for(let d=0; d<7; d++){
         const sh=emp.shifts[d]; const off = !sh;
@@ -438,8 +440,6 @@ function renderBody(){
       b.appendChild(addTr);
     }
   }
-  // fix screen-reader duplicate
-  document.querySelectorAll(".scr").forEach(s=>s.style.display="none");
 }
 function renderCoverage(){
   const ds=dayDates(), g=document.getElementById("covGrid"); g.innerHTML="";
