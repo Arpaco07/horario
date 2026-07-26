@@ -180,20 +180,30 @@
 
   /* ---------- IMPRESIÓN ---------- */
   @media print{
-    @page{size:landscape;margin:10mm}
+    @page{size:landscape;margin:8mm}
     body{background:#fff}
     .wrap{max-width:none;padding:0}
     .no-print{display:none !important}
-    .sheet{box-shadow:none;border:none;border-radius:0}
-    .sheet-title{display:block;text-align:center;margin-bottom:8px}
-    .sheet-title .rest{font-family:"Archivo";font-weight:800;font-size:20px}
-    .sheet-title .range{font-weight:700;font-size:14px;letter-spacing:.04em}
+    .sheet{box-shadow:none;border:none;border-radius:0;page-break-inside:avoid}
+    .sheet-title{display:block;text-align:center;margin-bottom:6px}
+    .sheet-title .rest{font-family:"Archivo";font-weight:800;font-size:16px}
+    .sheet-title .range{font-weight:700;font-size:12px;letter-spacing:.04em}
     .table-scroll{overflow:visible}
     .col-name,.emp-name,.sec-row td{position:static !important;box-shadow:none !important}
     thead th{position:static;background:#eee !important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
     .sec-row td{background:#333 !important;color:#fff !important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
     .cell.off{background:#f0f0f0 !important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
-    table{font-size:12px}
+    /* Layout fijo + sin cortes de línea: cabe en una sola hoja, vertical u horizontal */
+    table{font-size:10px;table-layout:fixed;width:100%;page-break-inside:avoid}
+    th,td{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .col-name{width:70px}
+    .emp-name{padding:3px 6px;font-size:10px}
+    .cell{padding:3px 3px;min-width:0}
+    .sec-row td{padding:3px 8px;font-size:10px}
+    thead th{padding:4px 2px;font-size:10px}
+    thead .daynum{font-size:9px}
+    .footnote{margin-top:8px}
+    .footnote-area{font-size:10px;padding:6px}
     .del-emp,.nameinput{display:none}
     .footnote-area{border:none;background:#fff;resize:none;font-weight:700}
   }
@@ -301,6 +311,7 @@ const SECTIONS_DEF = [
   {id:"limpieza", name:"Limpieza", check:false},
 ];
 const PRESETS = [
+  {label:"7:00 a 3:00", s:420, e:900},
   {label:"7:30 a 3:30", s:450, e:930},
   {label:"8:00 a 4:00", s:480, e:960},
   {label:"11:00 a 7:00", s:660, e:1140},
