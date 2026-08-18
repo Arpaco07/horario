@@ -179,6 +179,13 @@
   }
 
   /* ---------- IMPRESIÓN ---------- */
+  .status{font-weight:600}
+  .status.ok{color:var(--ok)}
+  .status.saving{color:var(--ink-soft)}
+  .status.warn{color:var(--warn)}
+  .weeknav{display:inline-flex;align-items:center;gap:6px}
+  .wk{padding:7px 10px;font-size:14px;line-height:1;border-radius:8px}
+
   @media print{
     @page{size:landscape;margin:8mm}
     body{background:#fff}
@@ -215,7 +222,7 @@
   <div class="top no-print">
     <div class="brand-block" style="flex:1;min-width:240px">
       <input class="titlefield" id="restName" value="Los Pares 84×88" aria-label="Nombre del restaurante">
-      <div class="sub">Horario semanal del personal · se guarda solo en este navegador</div>
+      <div class="sub">Horario semanal del personal · <span id="status" class="status saving">Cargando…</span></div>
     </div>
     <div class="toolbar">
       <button id="editBtn" class="ghost" onclick="toggleEdit()">✎ Editar empleados</button>
@@ -228,7 +235,11 @@
 
   <div class="settings no-print">
     <label>Semana (elige el lunes)
-      <input type="date" id="weekStart" onchange="setWeek(this.value)">
+      <span class="weeknav">
+        <button type="button" class="wk" onclick="shiftWeek(-1)" title="Semana anterior">◀</button>
+        <input type="date" id="weekStart" onchange="setWeek(this.value)">
+        <button type="button" class="wk" onclick="shiftWeek(1)" title="Semana siguiente">▶</button>
+      </span>
     </label>
     <div class="rule-inline">
       Después de las
@@ -393,16 +404,70 @@ function rangeLabel(){
   return `DEL ${a.getDate()} DE ${MONTHS[a.getMonth()].toUpperCase()} AL ${b.getDate()} DE ${MONTHS[b.getMonth()].toUpperCase()}`;
 }
 
-/* ================= Persistencia ================= */
-function save(){
-  state.restName = document.getElementById("restName").value;
-  state.footer   = document.getElementById("footer").value;
-  try{ localStorage.setItem(KEY, JSON.stringify(state)); }catch(e){ /* preview sin storage */ }
-  renderCoverage(); renderPrintHeader();
+/* ================= Persistencia (nube por semana + respaldo local) ================= */
+const SB_URL='https://vfhjuojcdslffgfqvhql.supabase.co';
+const SB_KEY='sb_publishable_CflZaiS3yyyycfKvTrR3Jw_qwbjo9lV';
+const TABLE='horarios';
+const LK   = s => `horarioLosPares_v3_${s}`;
+const LK_LAST='horarioLosPares_v3_last';
+let online=true, saveTimer=null;
+
+function sbHead(extra){ return Object.assign({'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'}, extra||{}); }
+function stripWeek(st){ const o=Object.assign({},st); delete o.weekStart; return o; }
+function setStatus(t,cls){ const e=document.getElementById('status'); if(e){ e.textContent=t; e.className='status '+(cls||''); } }
+
+async function sbGetWeek(semana){
+  const r=await fetch(`${SB_URL}/rest/v1/${TABLE}?semana=eq.${semana}&select=datos`,{headers:sbHead()});
+  if(!r.ok) throw 0; const a=await r.json(); return a[0]?a[0].datos:null;
 }
-function load(){
-  try{ const raw=localStorage.getItem(KEY); if(raw) return JSON.parse(raw); }catch(e){}
-  return seed();
+async function sbGetLatest(){
+  const r=await fetch(`${SB_URL}/rest/v1/${TABLE}?select=datos&order=semana.desc&limit=1`,{headers:sbHead()});
+  if(!r.ok) throw 0; const a=await r.json(); return a[0]?a[0].datos:null;
+}
+async function sbSave(semana,datos){
+  const r=await fetch(`${SB_URL}/rest/v1/${TABLE}?on_conflict=semana`,{method:'POST',
+    headers:sbHead({'Prefer':'resolution=merge-duplicates'}),
+    body:JSON.stringify({semana,datos,actualizado:new Date().toISOString()})});
+  if(!r.ok) throw 0;
+}
+
+function save(){
+  state.restName=document.getElementById("restName").value;
+  state.footer  =document.getElementById("footer").value;
+  const semana=state.weekStart, datos=stripWeek(state);
+  try{ localStorage.setItem(LK(semana),JSON.stringify(state)); localStorage.setItem(LK_LAST,semana); }catch(e){}
+  renderCoverage(); renderPrintHeader();
+  setStatus('Guardando…','saving');
+  clearTimeout(saveTimer);
+  saveTimer=setTimeout(async()=>{
+    try{ await sbSave(semana,datos); online=true; setStatus('Guardado en la nube ✓','ok'); }
+    catch(e){ online=false; setStatus('Sin conexión · guardado en este equipo','warn'); }
+  },600);
+}
+
+async function loadWeek(semana){
+  setStatus('Cargando…','saving');
+  let datos=null, fromCloud=false, templated=false, migrated=false;
+  try{ datos=await sbGetWeek(semana); online=true; if(datos)fromCloud=true; }
+  catch(e){ online=false; }
+  if(!datos){ try{ const raw=localStorage.getItem(LK(semana)); if(raw) datos=stripWeek(JSON.parse(raw)); }catch(e){} }
+  if(!datos && online){ try{ const l=await sbGetLatest(); if(l){ datos=l; templated=true; } }catch(e){} }
+  if(!datos){ try{ const v2=localStorage.getItem('horarioLosPares_v2'); if(v2){ datos=stripWeek(JSON.parse(v2)); migrated=true; } }catch(e){} }
+  if(!datos){ datos=stripWeek(seed()); }
+  state=Object.assign({weekStart:semana}, datos);
+  render();
+  if(migrated){ save(); }                       // rescata tu horario actual y lo sube
+  else setStatus(
+    online ? (fromCloud?'Guardado en la nube ✓':(templated?'Semana nueva (copiada de la anterior) — edita y se guarda':'Listo'))
+           : 'Sin conexión · guardado en este equipo',
+    online?(fromCloud?'ok':'saving'):'warn');
+}
+
+function setWeek(v){ if(v) loadWeek(v); }
+function shiftWeek(delta){
+  const d=new Date(state.weekStart+'T00:00'); d.setDate(d.getDate()+delta*7);
+  const [y,m,da]=[d.getFullYear(),d.getMonth()+1,d.getDate()];
+  loadWeek(`${y}-${String(m).padStart(2,'0')}-${String(da).padStart(2,'0')}`);
 }
 
 /* ================= Cobertura (el corazón del sistema) ================= */
@@ -514,7 +579,6 @@ function toggleEdit(){ editMode=!editMode; render(); }
 function renameEmp(sec,i,v){ state.sections[sec][i].name=v.trim()||state.sections[sec][i].name; save(); }
 function delEmp(sec,i){ if(confirm(`¿Quitar a ${state.sections[sec][i].name}?`)){ state.sections[sec].splice(i,1); save(); render(); } }
 function addEmp(sec,name){ name=(name||"").trim(); if(!name) return; state.sections[sec].push({name, shifts:Array(7).fill(null)}); save(); render(); }
-function setWeek(v){ if(v){ state.weekStart=v; save(); render(); } }
 function setCfg(){
   state.cfg.thHour=clamp(+document.getElementById("thHour").value,0,23);
   state.cfg.minMes=clamp(+document.getElementById("minMes").value,0,9);
@@ -569,8 +633,11 @@ function importData(ev){
 }
 
 /* ================= Inicio ================= */
-state=load();
-render();
+let initWeek=null;
+try{ initWeek=localStorage.getItem(LK_LAST); }catch(e){}
+if(!initWeek){ try{ const v2=localStorage.getItem('horarioLosPares_v2'); if(v2) initWeek=JSON.parse(v2).weekStart; }catch(e){} }
+if(!initWeek) initWeek=mondayISO(new Date());
+loadWeek(initWeek);
 document.getElementById("restName").addEventListener("change",save);
 document.addEventListener("keydown",e=>{ if(e.key==="Escape") closeModal(); });
 </script>
