@@ -129,6 +129,11 @@
   .cell.off{color:var(--off-ink);background:repeating-linear-gradient(45deg,#f3f2ec,#f3f2ec 6px,#eceae2 6px,#eceae2 12px)}
   .cell.off .txt{font-weight:800;color:var(--off-ink)}
   .cell .txt{display:block}
+  /* Turno quebrado (partido): dos bloques en el mismo día */
+  .cell.split{background:#f3f7ff}
+  .cell.split:hover{background:#e8effc}
+  .cell.split .txt{font-size:11.5px;line-height:1.25}
+  .cell.split .txt+.txt{border-top:1px dotted var(--line-strong);margin-top:2px;padding-top:2px}
   tbody tr:nth-child(even) .emp-name{background:#fbfaf7}
 
   /* Deslizar horizontal con la columna de nombres fija */
@@ -165,6 +170,11 @@
   .custom-row{display:flex;align-items:center;gap:8px;margin:6px 0 4px;flex-wrap:wrap}
   .custom-row select{font:inherit;font-size:14px;padding:8px;border:1px solid var(--line-strong);border-radius:9px;background:#fff}
   .modal-foot{display:flex;gap:8px;justify-content:space-between;padding:14px 18px;border-top:1px solid var(--line);background:#faf9f5}
+  .modal-body{max-height:72vh;overflow-y:auto}
+  .preset.split{background:#f3f7ff;border-color:#b9cbe8}
+  .preset.split:hover{border-color:#4a6fa5}
+  .splitchk{display:flex;align-items:center;gap:7px;font-size:13px;font-weight:600;color:var(--ink);margin:8px 0 2px;cursor:pointer}
+  .splitchk input{width:16px;height:16px;accent-color:var(--brand)}
 
   .hint{font-size:12.5px;color:var(--ink-soft);margin:2px 2px 14px}
 
@@ -200,6 +210,9 @@
     thead th{position:static;background:#eee !important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
     .sec-row td{background:#333 !important;color:#fff !important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
     .cell.off{background:#f0f0f0 !important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+    .cell.split{background:#eef3fb !important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+    .cell.split .txt{white-space:nowrap;font-size:9px;line-height:1.2}
+    .cell.split .txt+.txt{border-top:1px dotted #999;margin-top:1px;padding-top:1px}
     /* Layout fijo + sin cortes de línea: cabe en una sola hoja, vertical u horizontal */
     table{font-size:10px;table-layout:fixed;width:100%;page-break-inside:avoid}
     th,td{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -273,6 +286,7 @@
   <div class="legend no-print">
     <span><i class="swatch" style="background:var(--brand)"></i> Sección</span>
     <span><i class="swatch off" style="background:#eceae2"></i> D = Descanso</span>
+    <span><i class="swatch" style="background:#e8effc;border:1px solid #b9cbe8"></i> Turno quebrado (partido)</span>
     <span><i class="swatch" style="background:var(--ok-bg)"></i> Cobertura OK</span>
     <span><i class="swatch" style="background:var(--warn-bg)"></i> Falta gente</span>
     <span><i class="swatch" style="background:var(--crit-bg)"></i> Sin cubrir</span>
@@ -294,12 +308,24 @@
     </div>
     <div class="modal-body">
       <div class="preset-grid" id="presetGrid"></div>
-      <div style="font-size:12px;color:var(--ink-soft);font-weight:600;margin-bottom:4px">Turno personalizado</div>
+
+      <div style="font-size:12px;color:var(--ink-soft);font-weight:600;margin:10px 0 4px">Turnos quebrados (partidos)</div>
+      <div class="preset-grid" id="splitGrid"></div>
+
+      <div style="font-size:12px;color:var(--ink-soft);font-weight:600;margin:12px 0 4px">Turno personalizado</div>
       <div class="custom-row">
         <select id="startSel"></select>
         <span style="color:var(--ink-soft)">a</span>
         <select id="endSel"></select>
-        <button class="primary" onclick="applyCustom()">Aplicar</button>
+      </div>
+      <label class="splitchk"><input type="checkbox" id="splitChk" onchange="toggleSplitRow()"> Partir el turno (quebrado)</label>
+      <div class="custom-row" id="splitRow" style="display:none">
+        <select id="startSel2"></select>
+        <span style="color:var(--ink-soft)">a</span>
+        <select id="endSel2"></select>
+      </div>
+      <div class="custom-row" style="margin-top:8px">
+        <button class="primary" onclick="applyCustom()" style="width:100%">Aplicar turno</button>
       </div>
     </div>
     <div class="modal-foot">
@@ -330,6 +356,13 @@ const PRESETS = [
   {label:"1:00 a 9:00", s:780, e:1260},
   {label:"1:00 a cierre", s:780, e:CLOSE},
   {label:"3:00 a cierre", s:900, e:CLOSE},
+];
+/* Turnos quebrados fijos (dos bloques el mismo día) */
+const SPLIT_PRESETS = [
+  {label:"10:00 a 1:00 y 6:00 a cierre", b:[{s:600,e:780},{s:1080,e:CLOSE}]},
+  {label:"10:00 a 2:00 y 6:00 a cierre", b:[{s:600,e:840},{s:1080,e:CLOSE}]},
+  {label:"8:00 a 12:00 y 5:00 a cierre", b:[{s:480,e:720},{s:1020,e:CLOSE}]},
+  {label:"9:00 a 1:00 y 6:00 a cierre", b:[{s:540,e:780},{s:1080,e:CLOSE}]},
 ];
 const KEY = "horarioLosPares_v2";
 
@@ -388,9 +421,29 @@ function fmtLong(min){
   let h=Math.floor(min/60), m=min%60, h12=((h+11)%12)+1, ap=h<12?"am":"pm";
   return `${h12}:${String(m).padStart(2,"0")} ${ap}`;
 }
+/* Un turno puede ser: null (descanso), {s,e} (un bloque) o [{s,e},{s,e}] (quebrado) */
+function normBlocks(sh){
+  if(!sh) return [];
+  const arr = Array.isArray(sh) ? sh : [sh];
+  return arr.filter(b=>b && typeof b.s==="number" && typeof b.e==="number" && b.e>b.s)
+            .sort((a,b)=>a.s-b.s);
+}
+function packBlocks(bl){
+  if(!bl || bl.length===0) return null;
+  return bl.length===1 ? {s:bl[0].s, e:bl[0].e} : bl.map(b=>({s:b.s,e:b.e}));
+}
+function blockLabel(b){
+  return `${fmtShort(b.s)} a ${b.e===CLOSE ? "cierre" : fmtShort(b.e)}`;
+}
 function shiftLabel(sh){
-  if(!sh) return "D";
-  return `${fmtShort(sh.s)} a ${sh.e===CLOSE ? "cierre" : fmtShort(sh.e)}`;
+  const bl=normBlocks(sh);
+  if(!bl.length) return "D";
+  return bl.map(blockLabel).join(" / ");
+}
+function shiftCellHTML(sh){
+  const bl=normBlocks(sh);
+  if(!bl.length) return `<span class="txt">D</span>`;
+  return bl.map(b=>`<span class="txt">${blockLabel(b)}</span>`).join("");
 }
 function dayDates(){
   const [y,m,d]=state.weekStart.split("-").map(Number);
@@ -472,7 +525,13 @@ function shiftWeek(delta){
 
 /* ================= Cobertura (el corazón del sistema) ================= */
 function presentCount(secId,d,t){
-  let n=0; for(const e of state.sections[secId]){const s=e.shifts[d]; if(s && s.s<=t && t<s.e) n++;} return n;
+  let n=0;
+  for(const e of state.sections[secId]){
+    for(const b of normBlocks(e.shifts[d])){
+      if(b.s<=t && t<b.e){ n++; break; }   // la persona cuenta una sola vez
+    }
+  }
+  return n;
 }
 function analyzeDay(d){
   const th=state.cfg.thHour*60, msgs=[]; let sev="ok";
@@ -542,8 +601,9 @@ function renderBody(){
         : `${esc(emp.name)}`;
       let cells=`<td class="emp-name">${nameCell}</td>`;
       for(let d=0; d<7; d++){
-        const sh=emp.shifts[d]; const off = !sh;
-        cells+=`<td class="cell${off?" off":""}" onclick="openModal('${sec.id}',${ei},${d})"><span class="txt">${shiftLabel(sh)}</span></td>`;
+        const bl=normBlocks(emp.shifts[d]);
+        const cls = bl.length===0 ? " off" : (bl.length>1 ? " split" : "");
+        cells+=`<td class="cell${cls}" onclick="openModal('${sec.id}',${ei},${d})">${shiftCellHTML(emp.shifts[d])}</td>`;
       }
       tr.innerHTML=cells; b.appendChild(tr);
     });
@@ -595,9 +655,28 @@ function openModal(sec,i,d){
   document.getElementById("mWhen").textContent=`${DAYS[d]} ${dayDates()[d].getDate()}`;
   const pg=document.getElementById("presetGrid");
   pg.innerHTML=PRESETS.map(p=>`<button class="preset" onclick="applyShift({s:${p.s},e:${p.e}})">${p.label}</button>`).join("");
-  buildTimeSelect("startSel", emp.shifts[d]?emp.shifts[d].s:openFor(d));
-  buildTimeSelect("endSel",   emp.shifts[d]?emp.shifts[d].e:CLOSE);
+  const sg=document.getElementById("splitGrid");
+  sg.innerHTML=SPLIT_PRESETS.map((p,k)=>`<button class="preset split" onclick="applySplitPreset(${k})">${p.label}</button>`).join("");
+
+  const bl=normBlocks(emp.shifts[d]);
+  const b1 = bl[0] || {s:openFor(d), e:CLOSE};
+  const b2 = bl[1] || {s:1080, e:CLOSE};          // por defecto 6:00 pm a cierre
+  buildTimeSelect("startSel",  b1.s);
+  buildTimeSelect("endSel",    b1.e);
+  buildTimeSelect("startSel2", b2.s);
+  buildTimeSelect("endSel2",   b2.e);
+  const chk=document.getElementById("splitChk");
+  chk.checked = bl.length>1;
+  toggleSplitRow();
   document.getElementById("overlay").classList.add("show");
+}
+function toggleSplitRow(){
+  document.getElementById("splitRow").style.display =
+    document.getElementById("splitChk").checked ? "flex" : "none";
+}
+function applySplitPreset(k){
+  const p=SPLIT_PRESETS[k];
+  applyShift(packBlocks(p.b.map(b=>({s:b.s,e:b.e}))));
 }
 function buildTimeSelect(id,sel){
   const s=document.getElementById(id); s.innerHTML="";
@@ -613,7 +692,12 @@ function applyShift(sh){
 function applyCustom(){
   const s=+document.getElementById("startSel").value, e=+document.getElementById("endSel").value;
   if(e<=s){ alert("La hora de salida debe ser después de la de entrada."); return; }
-  applyShift({s,e});
+  if(!document.getElementById("splitChk").checked){ applyShift({s,e}); return; }
+
+  const s2=+document.getElementById("startSel2").value, e2=+document.getElementById("endSel2").value;
+  if(e2<=s2){ alert("En el segundo bloque, la salida debe ser después de la entrada."); return; }
+  if(s2<e){ alert("El segundo bloque tiene que empezar después de que termina el primero.\n\nEjemplo: 10:00 am a 1:00 pm y luego 6:00 pm a cierre."); return; }
+  applyShift(packBlocks([{s,e},{s:s2,e:e2}]));
 }
 function closeModal(){ document.getElementById("overlay").classList.remove("show"); editing=null; }
 
