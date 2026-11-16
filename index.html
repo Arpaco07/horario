@@ -725,5 +725,16 @@ loadWeek(initWeek);
 document.getElementById("restName").addEventListener("change",save);
 document.addEventListener("keydown",e=>{ if(e.key==="Escape") closeModal(); });
 </script>
+
+<script>
+/* Service worker: deja que la pantalla abra aunque no haya internet.
+   Los datos siguen saliendo en vivo de Supabase; esto solo guarda la
+   pantalla. Si hay senal, siempre se sirve la version mas reciente. */
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', function () {
+    navigator.serviceWorker.register('./sw.js').catch(function () {});
+  });
+}
+</script>
 </body>
 </html>
